@@ -21,7 +21,7 @@ except:
 
 nltk.download('stopwords', quiet=True)  # download stopwords
 nltk.download('punkt', quiet=True)  # download tokenizer
-nltk.download('wordnet', quiet=True)  # Download wordnet data
+nltk.download('wordnet')  # Download wordnet data
     
 
 class ExtractTopWords:
@@ -138,8 +138,6 @@ class ExtractTopWords:
                 if remove_punction and word in string.punctuation:
                     continue
                 if remove_stopwords and word.lower() in stopwords:
-                    continue
-                if remove_stopwords and WordNetLemmatizer().lemmatize(word.lower()) in stopwords:
                     continue
                 if remove_numbers and re.search(r'\d', word):  # use a regular expression to check for digits
                     continue
@@ -314,7 +312,7 @@ class ExtractTopWords:
             topic_docs = corpus_arr[labels == label]
             topic_doc_string = " ".join(topic_docs)
             topic_doc_words = word_tokenize(topic_doc_string)
-            topic_doc_counter = collections.Counter(topic_doc_words)
+            topic_doc_counter = Counter(topic_doc_words)
 
             word_topic_mat[:, i] = np.array([topic_doc_counter.get(word, 0) for word in vocab])
         

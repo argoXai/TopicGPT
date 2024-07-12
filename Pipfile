@@ -1,0 +1,30 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+gensim = "*"
+hdbscan = "*"
+nltk = "*"
+numpy = "*"
+openai = "*"
+pandas = "*"
+plotly = "*"
+regex = "*"
+scikit-learn = "*"
+seaborn = "*"
+sentence-transformers = "*"
+tiktoken = "*"
+tokenizers = "*"
+tqdm = "*"
+umap-learn = {extras = ["plot"] }
+ipykernel = "*"
+shell = "*"
+topicgpt = {file = ".", editable = true}
+
+[requires]
+python_version = "3.11"
+
+[dev-packages]
+python = "*"

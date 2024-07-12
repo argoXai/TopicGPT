@@ -229,15 +229,14 @@ class TopicGPT:
             verbose (bool, optional): Whether to print the progress and details of the process.
         """
 
-        self.corpus = corpus
+        self.corpus = corpus 
+        
         # remove empty documents
         len_before_removing = len(self.corpus)
         while '' in self.corpus:
             corpus.remove('')
         len_after_removing = len(self.corpus)
         if verbose:
-            print('*' * 100)
-            print('*' * 100)
             print("Removed " + str(len_before_removing - len_after_removing) + " empty documents.")
 
         if self.vocab_embeddings is None:

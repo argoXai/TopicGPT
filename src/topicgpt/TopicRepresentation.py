@@ -1,8 +1,4 @@
 import numpy as np
-import umap
-import sys
-import os
-import inspect
 from tqdm import tqdm
 import umap
 import json
@@ -293,11 +289,19 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
     labels = np.array([label_mapping[label] for label in labels])
 
     extractor = ExtractTopWords()
+    #print('-' * 100)
+    #print(document_embeddings)
+    #print('-' * 100)
+    #print(labels)
+    #print('-' * 100)
     centroid_dict = extractor.extract_centroids(document_embeddings, labels)  # get the centroids of the clusters
 
     centroid_arr = np.array(list(centroid_dict.values()))
     if centroid_arr.ndim == 1:
         centroid_arr = centroid_arr.reshape(-1, 1)
+    #print('-'*100)
+    #print(np.array(list(centroid_dict.values())))
+    #print('-' * 100)
     dim_red_centroids = umap_mapper.transform(np.array(list(centroid_dict.values())))  # map the centroids to low dimensional space
 
     dim_red_centroid_dict = {label: centroid for label, centroid in zip(centroid_dict.keys(), dim_red_centroids)}

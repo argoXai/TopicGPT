@@ -45,7 +45,6 @@ class TopicPrompting:
              openai_model_temperature_prompting: float = 0.5,
              openai_embedding_model: str = "text-embedding-ada-002",
              max_context_length_embedding: int = 8191, 
-             basic_model_instruction: str = basic_model_instruction,
              corpus_instruction: str = "",
              enhancer: TopwordEnhancement = None,
              vocab: list = None,
@@ -62,7 +61,6 @@ class TopicPrompting:
             openai_model_temperature_prompting (float, optional): Temperature for the prompting model (default is 0.5).
             openai_embedding_model (str, optional): OpenAI model to use for computing embeddings for similarity search (default is "text-embedding-ada-002").
             max_context_length_embedding (int, optional): Maximum context length for the embedding model (default is 8191).
-            basic_model_instruction (str, optional): Basic instruction for the prompting model.
             corpus_instruction (str, optional): Instruction for the prompting model to use the corpus.
             enhancer (TopwordEnhancement, optional): TopwordEnhancement object for naming and describing the topics (default is None).
             vocab (list, optional): Vocabulary of the corpus (default is None).
@@ -77,7 +75,6 @@ class TopicPrompting:
         self.openai_model_temperature_prompting = openai_model_temperature_prompting
         self.openai_embedding_model = openai_embedding_model
         self.max_context_length_embedding = max_context_length_embedding    
-        self.basic_model_instruction = basic_model_instruction
         self.corpus_instruction = f" The following information is available about the corpus used to identify the topics: {corpus_instruction}.\n"
         self.enhancer = enhancer
         self.vocab = vocab
@@ -420,7 +417,7 @@ class TopicPrompting:
         topk_docs = [topic.documents[i] for i in topk_doc_indices]
 
         # cut off documents that are too long
-        max_number_tokens = self.max_context_length_promting - len(tiktoken.encoding_for_model(self.openai_prompting_model).encode(self.basic_model_instruction + " " + self.corpus_instruction)) - 100
+        max_number_tokens = self.max_context_length_promting - len(tiktoken.encoding_for_model(self.openai_prompting_model).encode(self.corpus_instruction)) - 100
         n_tokens = 0
         for i, doc in enumerate(topk_docs):
             encoded_doc = tiktoken.encoding_for_model(self.openai_prompting_model).encode(doc)
@@ -458,7 +455,7 @@ class TopicPrompting:
         messages = [
             {
                 "role": "system",
-                "content": self.basic_model_instruction + " " + self.corpus_instruction
+                "content": self.corpus_instruction
             },
             {
                 "role": "user",
@@ -970,7 +967,7 @@ class TopicPrompting:
             dict: A dictionary with topic indices as keys and their descriptions as values.
         """
 
-        max_number_tokens = self.max_context_length_promting - len(tiktoken.encoding_for_model(self.openai_prompting_model).encode(self.basic_model_instruction + " " + self.corpus_instruction)) - 100
+        max_number_tokens = self.max_context_length_promting - len(tiktoken.encoding_for_model(self.openai_prompting_model).encode(self.corpus_instruction)) - 100
 
         topic_info = {} # dictionary with the topic indices as keys and the topic descriptions as values
 
@@ -1221,7 +1218,7 @@ class TopicPrompting:
         messages = [
             {
                 "role": "system",
-                "content": self.basic_model_instruction + " " + self.corpus_instruction
+                "content": self.corpus_instruction
             },
             {
                 "role": "user",

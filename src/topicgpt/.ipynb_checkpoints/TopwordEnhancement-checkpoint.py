@@ -1,9 +1,11 @@
 import tiktoken
+from openai import OpenAI
+
 
 from typing import Callable
 import numpy as np
 
-#basic_instruction =  "You are a helpful assistant. You are excellent at inferring topics from top-words extracted via topic-modelling. You make sure that everything you output is strictly based on the provided text."
+basic_instruction =  "You are a helpful assistant. You are excellent at inferring topics from top-words extracted via topic-modelling. You make sure that everything you output is strictly based on the provided text."
 
 class TopwordEnhancement:
 
@@ -12,8 +14,8 @@ class TopwordEnhancement:
     client,
     openai_model: str = "gpt-3.5-turbo",
     max_context_length: int = 4000,
-    openai_model_temperature: float = 0.1,
-    #basic_model_instruction: str = basic_instruction,
+    openai_model_temperature: float = 0.5,
+    basic_model_instruction: str = basic_instruction,
     corpus_instruction: str = "") -> None:
         """
         Initialize the OpenAIAssistant with the specified parameters.
@@ -23,6 +25,7 @@ class TopwordEnhancement:
             openai_model (str, optional): The OpenAI model to use (default is "gpt-3.5-turbo").
             max_context_length (int, optional): The maximum length of the context for the OpenAI model (default is 4000).
             openai_model_temperature (float, optional): The softmax temperature to use for the OpenAI model (default is 0.5).
+            basic_model_instruction (str, optional): The basic instruction for the model.
             corpus_instruction (str, optional): The instruction for the corpus. Useful if specific information on the corpus is available.
 
         Returns:
@@ -38,6 +41,7 @@ class TopwordEnhancement:
         self.openai_model = openai_model
         self.max_context_length = max_context_length
         self.openai_model_temperature = openai_model_temperature
+        self.basic_model_instruction = basic_model_instruction
         self.corpus_instruction = f" The following information is available about the corpus used to identify the topics: {corpus_instruction}"
 
     def __str__(self) -> str:
@@ -70,9 +74,7 @@ class TopwordEnhancement:
     def describe_topic_topwords_completion_object(self, 
                                topwords: list[str], 
                                n_words: int = None,
-                               query_function: Callable = lambda tws: f"""Please give me the common risk topic of those words: {tws}.
-                               Make sure the descriptions are short and concise! Do not cite more than 5 words per sub-aspect! 
-                               The expected output must mention first the sub-topic, the keywords, the description.""") :
+                               query_function: Callable = lambda tws: f"Please give me the common risk topic of those words: {tws}. Also describe the various aspects and sub-topics of the topic.") :
         """
         Describe the given topic based on its topwords using the OpenAI model.
 
@@ -96,7 +98,7 @@ class TopwordEnhancement:
 
 
         # if too many topwords are given, use only the first part of the topwords that fits into the context length
-        tokens_cumsum = np.cumsum([len(tiktoken.encoding_for_model(self.openai_model).encode(tw + ", ")) for tw in topwords]) + len(tiktoken.encoding_for_model(self.openai_model).encode(self.corpus_instruction))  # .encode(self.basic_model_instruction + " " + self.corpus_instruction))
+        tokens_cumsum = np.cumsum([len(tiktoken.encoding_for_model(self.openai_model).encode(tw + ", ")) for tw in topwords]) + len(tiktoken.encoding_for_model(self.openai_model).encode(self.basic_model_instruction + " " + self.corpus_instruction))
         if tokens_cumsum[-1] > self.max_context_length:
             print("Too many topwords given. Using only the first part of the topwords that fits into the context length. Number of topwords used: ", np.argmax(tokens_cumsum > self.max_context_length))
             n_words = np.argmax(tokens_cumsum > self.max_context_length)
@@ -106,7 +108,7 @@ class TopwordEnhancement:
 
         completion = self.client.chat.completions.create(model=self.openai_model,
         messages=[
-            {"role": "system", "content":  self.corpus_instruction},  # self.basic_model_instruction + " " + self.corpus_instruction},
+            {"role": "system", "content":  self.basic_model_instruction + " " + self.corpus_instruction},
             {"role": "user", "content": query_function(topwords)},
         ],
         temperature = self.openai_model_temperature)
@@ -117,8 +119,7 @@ class TopwordEnhancement:
                                topwords: list[str], 
                                n_words: int = None,
                                query_function: Callable = lambda tws: f"""Please give me the common risk topic of those words: {tws}.
-                               Make sure the descriptions are short and concise! Do not cite more than 5 words per sub-aspect! 
-                               The expected output must mention first the sub-topic, the keywords, the description.""") -> str:
+                               Make sure the descriptions are short and concise! Do not cite more than 5 words per sub-aspect! The expected output must mention first the sub-topic, the keywors, the description.""") -> str:
         """
         Describe the given topic based on its topwords using the OpenAI model.
 
@@ -184,7 +185,7 @@ class TopwordEnhancement:
         documents = new_doc_lis
 
         # if too many documents are given, use only the first part of the documents that fits into the context length
-        tokens_cumsum = np.cumsum([len(tiktoken.encoding_for_model(self.openai_model).encode(doc + ", ")) for doc in documents]) + len(tiktoken.encoding_for_model(self.openai_model).encode(self.corpus_instruction))  # self.basic_model_instruction + " " + self.corpus_instruction))
+        tokens_cumsum = np.cumsum([len(tiktoken.encoding_for_model(self.openai_model).encode(doc + ", ")) for doc in documents]) + len(tiktoken.encoding_for_model(self.openai_model).encode(self.basic_model_instruction + " " + self.corpus_instruction))
         if tokens_cumsum[-1] > self.max_context_length:
             print("Too many documents given. Using only the first part of the documents that fits into the context length. Number of documents used: ", np.argmax(tokens_cumsum > self.max_context_length))
             n_documents = np.argmax(tokens_cumsum > self.max_context_length)
@@ -192,7 +193,7 @@ class TopwordEnhancement:
 
         completion = self.client.chat.completions.create(model=self.openai_model,
         messages=[
-            {"role": "system", "content":  self.corpus_instruction},  # self.basic_model_instruction + " " + self.corpus_instruction},
+            {"role": "system", "content": self.basic_model_instruction + " " + self.corpus_instruction},
             {"role": "user", "content": query_function(documents)},
         ],
         temperature = self.openai_model_temperature)
